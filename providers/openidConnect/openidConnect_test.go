@@ -9,6 +9,7 @@ import (
 
 	"github.com/markbates/goth"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -68,6 +69,10 @@ func Test_BeginAuth(t *testing.T) {
 	a := assert.New(t)
 
 	provider := openidConnectProvider()
+	provider.GenerateCodeVerifier = func() string {
+		return "blah"
+	}
+
 	session, err := provider.BeginAuth("test_state")
 	s := session.(*Session)
 	a.NoError(err)
@@ -76,6 +81,8 @@ func Test_BeginAuth(t *testing.T) {
 	a.Contains(s.AuthURL, "state=test_state")
 	a.Contains(s.AuthURL, "redirect_uri=http%3A%2F%2Flocalhost%2Ffoo")
 	a.Contains(s.AuthURL, "scope=openid")
+	a.Contains(s.AuthURL, "code_challenge_method=S256")
+	a.Contains(s.AuthURL, fmt.Sprintf("code_challenge=%s", oauth2.S256ChallengeFromVerifier("blah")))
 }
 
 func Test_Implements_Provider(t *testing.T) {

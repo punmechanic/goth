@@ -17,6 +17,8 @@ type Session struct {
 	RefreshToken string
 	ExpiresAt    time.Time
 	IDToken      string
+
+	CodeVerifier string
 }
 
 // GetAuthURL will return the URL set by calling the `BeginAuth` function on the OpenID Connect provider.
@@ -40,9 +42,8 @@ func (s *Session) Authorize(provider goth.Provider, params goth.Params) (string,
 	}
 
 	// set code_verifier if passed as param
-	codeVerifier := params.Get("code_verifier")
-	if codeVerifier != "" {
-		authParams = append(authParams, oauth2.SetAuthURLParam("code_verifier", codeVerifier))
+	if s.CodeVerifier != "" {
+		authParams = append(authParams, oauth2.VerifierOption(s.CodeVerifier))
 	}
 
 	token, err := p.config.Exchange(goth.ContextForClient(p.Client()), params.Get("code"), authParams...)
